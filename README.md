@@ -34,3 +34,8 @@ A font may represent the character `é` using two glyphs: the `e` and the acute-
 fi -> ﬁ (ligature)
 ```
 The two characters `f` and `i` can be represent by a single glyph ligature glyph `ﬁ`.
+
+## Character Encoding Forms and Schemes
+
+- **Encoding Forms** include `UTF-8`, `UTF-16`, and `UTF-32`, which define how code points are represented as code units.
+- **Encoding Schemes** have `UTF-16BE`, `UTF-16LE`, `UTF-32BE`, and `UTF-32LE`, define how code units are represented as bytes and their byte ordering.
