@@ -48,3 +48,46 @@ Setting a per thread locale ID, and then not passing the locale ID as a paramete
 ICU4C APIs are designed to allow separate heaps for its libraries vs. the application. This is archieved by providing funcitons to allocate and release objects owned by ICU4C using only ICU4C library functions.
 
 ## Initialization and Termination
+
+- `u_setMemoryFunctions` replaces the standard library heap allocation functions used by ICU with alternate versions, provided by the application.
+
+- Data locating functions, `u_setCommonDate()`, `u_setDataDirection()`, and `u_setAppData()`. These functions will be required when ICU is configured to load its data directly from files rather than taking it from then default data DLL, and the files are not in the default location.
+
+- Sanity check that ICU is functioning and able to access data. This is important because configuration or installation problems that leave ICU unable to load its data do occur, and the resulting failures can be confusing. Since not all ICU APIs have UErrorCode parameters, in the absence of data they may sometimes silently return incorrect results.  
+The function `ulocdata_getCLDRversion()` is small and light weight, requires data, and reports the error in the absence of data.
+
+`u_cleanup()` frees all heap storage and other system resources that are held internally by the ICU library. It's not strictly required, failure to call it will cause memory leak checking tools to report problems for resources being held by ICU library.
+
+Before calling `u_cleanup()`, all ICU objects that were created by the application must be deleted, and all ICU services must be closed.
+
+For some platforms the configure option `--enable-auto-cleanup`, or defining the option `UCLN_NO_AUTO_CLEANUP` to 0, will add code which automatically cleans up ICU when its shared library is unloaded. See comments in `ucln_imp.h`.
+
+### C++ Static Initialization and Destruction
+
+The ICU library does not rely on C++ static initializers, meaning that applications will not encounter order-of-initialization problems from the use of ICU.
+
+When applications using the C++ static initialization, some significant limitations as follow:
+
+- `u_setMemoryFunctions()` and the data locating functions must still be called before any other use of ICU. Which includes any use during the construction of static objects.
+
+- `u_cleanup`can only be called after all other ICU-using objects have been deleted. Refer to the C++ literature on the order of static initialization and destruction.
+
+- Destruction of static objects that are scoped to a code block. There are lazily initialized when the code block is first entered, but destruction happens when the program terminates.
+
+### Dynamically Loading and Unloading ICU
+
+Before unloading, all ICU objects and services must be closed or deleted, and `u_cleanup` must be called.
+
+On Windows, the loading and unloading of ICU should never be done inside `DLLMain`. Loading one of the ICU libraries can cause other libraries or files to be loaded, leading to potential dead-lock.
+
+### Initializing in Multithread Environments
+
+When the following conditions occur, extra care is needed.
+
+- The application main program is written in plain C.
+
+- The application is multithread, with the first use of ICU within the process possibly occuring simultaneously in more than one thread.
+
+- The application will be run on a platform that does not handle C++ static constructors from libraries when the main program is not in C++. For example, Mac OS X and HP/UX.
+
+In this situation, the application must explicitly arrange for a first-use of ICU from a single thread before the multi-threaded use of ICU begins. A convenient ICU operation for this purpose is `uloc_getDefault()`, declared in `unicode/uloc.h`.
