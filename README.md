@@ -1,5 +1,3 @@
-Learning ICU usage, for getting a better job!
-
 # Ability of ICU
 * Code Page Conversion
 * Collation

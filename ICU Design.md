@@ -91,3 +91,38 @@ When the following conditions occur, extra care is needed.
 - The application will be run on a platform that does not handle C++ static constructors from libraries when the main program is not in C++. For example, Mac OS X and HP/UX.
 
 In this situation, the application must explicitly arrange for a first-use of ICU from a single thread before the multi-threaded use of ICU begins. A convenient ICU operation for this purpose is `uloc_getDefault()`, declared in `unicode/uloc.h`.
+
+## Error Handling
+
+Every function that can fail takes an error-code parameter by reference. This parameter is always the last paramter listed for the function.
+
+The `UErrorCode` parameter is defined as an enumerated type. Zero represents no error, positive values represent errors, and negative values represent non-error status codes. Macros `U_SUCCESS` and `U_FAILURE` are provided to check the error code.
+
+Functinos that declare a new `UErrorCode` parameter must initialize it to `U_ZERO_ERROR` before calling any other functions.
+
+## Extentsibility
+
+- **Data Extensibility**: The user installs new locales or conversion data to enhance the existing ICU support.
+
+- **Code Extensibility**: The classes, data, and design are fully extensible.
+
+- **Error Handling Extentsibility**: There are mechanisms available to enhance the built-in error handling when it is necessary.
+
+## Resource Bundle inheritance Model
+
+A resource bundle is a set of <key, value> pairs that provide a mapping from key to value. The set is organized into a tree with "root" at the top, the language at the first level, the country at the second level, and additional variants below these levels. The set must contain a root that has all keys that can be used by the program accessing the resource handles.
+
+Except for the root, each resource handle has an immediate parent. For example, 'root', 'root_en', 'root_en_us'. If a program doesn't find a key in a child resource handle, it can be assumed that it has the same key as the parent. The default locale has no effect on this. The language used for the root should contain values that minimize the need for its children to override it.
+
+The default locale is used only when there is not a resource handle bundle for a give lanaguage. When a resource handle is missing, ICU uses the parent unless that parent is root.
+
+## Version Numbers
+
+- `u_getVersions()` returns the version number of ICU as a whole in C++. In C, `ucol_getVersion()` returns the version number of ICU as a whole.
+
+- `ures_getVersion()` and `ResourceBundle::getVersion()` return the version number of a ResourceBundle. This is a data version number for the bundle as a whole and subject to inheritance.
+
+- `u_getUnicodeVersion()` and `Unicode::getUnicodeVersion()` return the version number of the Unicode character data that underlies ICU. This version reflects the numbering of the Unicode releases.
+
+- `Collator::getVersion()` in C++ and `ucol_getVersion()` in C return the version number of the Collator. This is a code version number for the collation code and algorithm. It is a combination of version numbers for the collation implementation,
+the Unicode Collation Algorithm data (which is the data that is used for characters that are not mentioned in a locale's specific collation elelments), and the collation elements.
